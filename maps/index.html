@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOWHACKER-GOD - Precise GPS Location</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a2e; /* Dark background */
+            color: #e0e0e0; /* Light text */
+            margin: 0;
+            flex-direction: column;
+            padding: 20px;
+            text-align: center;
+        }
+        .location-card {
+            background-color: #2a2a4a;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid #4a4a6e;
+            animation: fadeInScale 0.8s ease-out forwards;
+        }
+        h1 {
+            color: #00ff00; /* Hacker green */
+            font-size: 2.2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.6);
+        }
+        p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        #latitude, #longitude, #accuracy {
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #00c6ff, #0072ff); /* Blue gradient for emphasis */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
+            display: block;
+            word-break: break-all; /* Ensure long text wraps */
+        }
+        #accuracy {
+             font-size: 1.5em; /* Smaller for accuracy */
+             background: linear-gradient(45deg, #ff6b6b, #ee4c50); /* Reddish for accuracy */
+             -webkit-background-clip: text;
+             -webkit-text-fill-color: transparent;
+             margin-top: 15px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #00ff00;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            #latitude, #longitude, #accuracy {
+                font-size: 1.5em;
+            }
+            .location-card {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="location-card">
+        <h1>Your Precise GPS Coordinates</h1>
+        <p>This is the exact geographical location detected by your device:</p>
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        <p>Latitude:</p>
+        <span id="latitude">Searching...</span>
+        <p>Longitude:</p>
+        <span id="longitude">Searching...</span>
+        <p>Accuracy (meters):</p>
+        <span id="accuracy">Searching...</span>
+        <p style="font-size: 0.9em; margin-top: 20px; opacity: 0.7;">
+            (This requires your browser's location permission. Denser areas or indoors might affect accuracy.)
+        </p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const latitudeElement = document.getElementById('latitude');
+            const longitudeElement = document.getElementById('longitude');
+            const accuracyElement = document.getElementById('accuracy');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (navigator.geolocation) {
+                latitudeElement.textContent = "Requesting permission...";
+                longitudeElement.textContent = "Requesting permission...";
+                accuracyElement.textContent = "Requesting permission...";
+                loadingSpinner.style.display = 'block'; // Show spinner
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const accuracy = position.coords.accuracy; // Accuracy in meters
+
+                        latitudeElement.textContent = lat.toFixed(6); // Display with 6 decimal places for precision
+                        longitudeElement.textContent = lon.toFixed(6);
+                        accuracyElement.textContent = `${accuracy.toFixed(2)} m`;
+
+                        console.log(`SHADOWHACKER-GOD: GPS Location obtained:`);
+                        console.log(`  Latitude: ${lat}`);
+                        console.log(`  Longitude: ${lon}`);
+                        console.log(`  Accuracy: ${accuracy} meters`);
+
+                        loadingSpinner.style.display = 'none'; // Hide spinner
+                    },
+                    (error) => {
+                        // Geolocation error handler
+                        loadingSpinner.style.display = 'none'; // Hide spinner
+                        console.error("SHADOWHACKER-GOD: Geolocation error:", error);
+                        let errorMessage = 'Could not get exact location.';
+                        if (error.code === error.PERMISSION_DENIED) {
+                            errorMessage = 'Location access denied.';
+                            console.warn("SHADOWHACKER-GOD: User denied geolocation access.");
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            errorMessage = 'Location information unavailable.';
+                            console.error("SHADOWHACKER-GOD: Location information is unavailable.");
+                        } else if (error.code === error.TIMEOUT) {
+                            errorMessage = 'Location request timed out.';
+                            console.error("SHADOWHACKER-GOD: The request to get user location timed out.");
+                        }
+
+                        latitudeElement.textContent = errorMessage;
+                        longitudeElement.textContent = "N/A";
+                        accuracyElement.textContent = "N/A";
+                    },
+                    {
+                        enableHighAccuracy: true, // Request highest possible accuracy from GPS
+                        timeout: 15000,           // Increased timeout (15 seconds) for better chance of high accuracy
+                        maximumAge: 0             // Don't use cached position, get a fresh one
+                    }
+                );
+            } else {
+                loadingSpinner.style.display = 'none'; // Hide spinner
+                latitudeElement.textContent = 'Geolocation not supported.';
+                longitudeElement.textContent = 'N/A';
+                accuracyElement.textContent = 'N/A';
+                console.error("SHADOWHACKER-GOD: Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
+
+</body>
+</html>
